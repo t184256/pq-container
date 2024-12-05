@@ -32,3 +32,16 @@ cp root.key /etc/pki/nginx/private/server.key
 getent passwd nginx
 
 chown -R nginx: /etc/pki/nginx
+
+# Set up for nginx
+# Path to the nginx.conf file
+nginx_conf="/etc/nginx/nginx.conf"
+
+# Uncomment the section under "Settings for a TLS enabled server"
+sed -i '/# Settings for a TLS enabled server/ {
+    n
+    :a
+    s/^#//
+    n
+    /^\s*}/!ba
+}' "$nginx_conf"

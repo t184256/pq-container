@@ -113,17 +113,6 @@ run_s_client_and_grep "" "test.openquantumsafe.org" "6044" "CONNECTED(00000003)"
 run_s_client_and_grep "" "test.openquantumsafe.org" "6044" "NamedGroup: X25519Kyber768Draft00 (25497)"
 
 # TEST 4: Tests with the nginx server
-# Path to the nginx.conf file
-nginx_conf="/etc/nginx/nginx.conf"
-
-# Uncomment the section under "Settings for a TLS enabled server"
-sed -i '/# Settings for a TLS enabled server/ {
-    n
-    :a
-    s/^#//
-    n
-    /^\s*}/!ba
-}' "$nginx_conf"
 nginx
 run_s_client_and_grep "" "localhost" "443" "NamedGroup: X25519Kyber768Draft00 (25497)"
 run_s_client_and_grep "" "localhost" "443" "CONNECTED(00000003)"
