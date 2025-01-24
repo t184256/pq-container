@@ -1,0 +1,11 @@
+summary: PQ Container Test
+provision:
+    how: container
+discover:
+    how: shell
+execute:
+    how: tmt
+    script: |
+        cat /etc/fedora-release
+        bash setup.sh
+        bash test.sh
