@@ -82,8 +82,8 @@ echo "Server started with PID $s_server_pid"
 # Give the server some time to start (if needed)
 sleep 5
 
-# TEST 1: Default connection to X25519-KYBER768
-run_s_client_and_grep "" "localhost" "4433" "NamedGroup: X25519Kyber768Draft00 (25497)"
+# TEST 1: Default connection with X25519MLKEM768
+run_s_client_and_grep "" "localhost" "4433" "NamedGroup: UNKNOWN (4588)"
 
 # Stop the server
 echo "Stopping openssl s_server with PID $s_server_pid..."
@@ -99,7 +99,21 @@ echo "Server started with PID $s_server_pid"
 sleep 5
 
 # TEST 2: Specify the group explicitly
-run_s_client_and_grep "-groups p256_kyber768" "localhost" "4433" "NamedGroup: SecP256r1Kyber768Draft00 (25498)"
+# TEST 2.1: Specify the group SecP256r1MLKEM768
+run_s_client_and_grep "-groups SecP256r1MLKEM768" "localhost" "4433" "NamedGroup: UNKNOWN (4587)"
+
+# Stop the server
+echo "Stopping openssl s_server with PID $s_server_pid..."
+stop_s_server "$s_server_pid"
+echo "Server stopped."
+
+# TEST 2.2: Specify the group X25519MLKEM768
+# Start the server
+echo "Starting openssl s_server..."
+s_server_pid=$(start_s_server "root.key" "root.crt" 4433)
+echo "Server started with PID $s_server_pid"
+
+run_s_client_and_grep "-groups X25519MLKEM768" "localhost" "4433" "NamedGroup: UNKNOWN (4588)"
 
 # Stop the server
 echo "Stopping openssl s_server with PID $s_server_pid..."
@@ -107,14 +121,16 @@ stop_s_server "$s_server_pid"
 echo "Server stopped."
 
 # TEST 3: Tests with the external server
-run_s_client_and_grep "" "test.openquantumsafe.org" "6042" "CONNECTED(00000003)"
-run_s_client_and_grep "" "test.openquantumsafe.org" "6042" "NamedGroup: SecP256r1Kyber768Draft00 (25498)"
-run_s_client_and_grep "" "test.openquantumsafe.org" "6044" "CONNECTED(00000003)"
-run_s_client_and_grep "" "test.openquantumsafe.org" "6044" "NamedGroup: X25519Kyber768Draft00 (25497)"
+# TEST 3.1: #Hybrid ML-KEM - SecP256r1MLKEM768 TLS connection with oqs test server
+run_s_client_and_grep "" "test.openquantumsafe.org" "6001" "CONNECTED(00000003)"
+run_s_client_and_grep "" "test.openquantumsafe.org" "6001" "NamedGroup: UNKNOWN (4587)"
+# TEST 3.2: #Hybrid ML-KEM - X25519MLKEM768 TLS connection with oqs test server
+run_s_client_and_grep "" "test.openquantumsafe.org" "6002" "CONNECTED(00000003)"
+run_s_client_and_grep "" "test.openquantumsafe.org" "6002" "NamedGroup: UNKNOWN (4588)"
 
 # TEST 4: Tests with the nginx server
 nginx
-run_s_client_and_grep "" "localhost" "443" "NamedGroup: X25519Kyber768Draft00 (25497)"
+run_s_client_and_grep "" "localhost" "443" "NamedGroup: UNKNOWN (4587)"
 run_s_client_and_grep "" "localhost" "443" "CONNECTED(00000003)"
 
 # TEST 5: Tests with curl
@@ -126,3 +142,18 @@ else
     echo "Curl command failed."
 fi
 
+# TEST 6: List the supported ML-KEM algorithms
+openssl list -kem-algorithms -provider oqsprovider | grep SecP256r1MLKEM768 || echo "Fail: SecP256r1MLKEM768 not found"
+openssl list -kem-algorithms -provider oqsprovider | grep X25519MLKEM768 ||  echo "Fail: X25519MLKEM768 not found"
+
+# TEST 7: Generate a ML-DSA Key Pair
+openssl genpkey -algorithm mldsa65 -out mldsa65_private.pem && ls  mldsa65_private.pem || echo "Fail: Private key not created"
+openssl pkey -in mldsa65_private.pem -pubout -out mldsa65_public.pem && ls mldsa65_public.pem || echo "Fail: Public key not created"
+
+# TEST 7.1: # sign a raw message
+touch message.txt
+seq 1 10 > message.txt
+openssl dgst -sha256 -sign mldsa65_private.pem -out signature.bin message.txt && ls signature.bin || echo "Fail: Signature not created"
+
+# TEST 7.2: # Verify the signature
+openssl dgst -sha256 -verify mldsa65_public.pem -signature signature.bin message.txt | grep "Verified OK" || echo "Fail: Verification failed"
