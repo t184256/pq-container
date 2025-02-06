@@ -2,7 +2,7 @@
 
 set -exo pipefail
 
-dnf -y install --no-allow-downgrade vim nginx curl openssl oqsprovider crypto-policies-scripts tcpdump sed
+dnf upgrade --refresh -y && dnf install -y vim nginx curl openssl liboqs oqsprovider crypto-policies-scripts tcpdump sed
 
 update-crypto-policies --set DEFAULT:TEST-PQ
 
