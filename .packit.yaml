@@ -11,8 +11,8 @@ jobs:
       failure_comment:
         message: "Tests failed."
     targets:
-      - fedora-rawhide-x86_64
-      - fedora-rawhide-aarch64
+      - fedora-42-x86_64
+      - fedora-42-aarch64
     tf_extra_params:
       environments:
         - os:
