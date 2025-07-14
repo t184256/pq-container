@@ -57,6 +57,9 @@ rlJournalStart
 
     rlPhaseStartSetup
         rlAssertRpm --all $PACKAGES
+
+        rlRun 'sh ../../setup.sh'
+
         rlRun -s "update-crypto-policies --show"
         rlAssertGrep "TEST-PQ" $rlRun_LOG
         rlRun "touch ${SERVER_TXT}"

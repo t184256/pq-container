@@ -1,0 +1,21 @@
+summary: Testing key exchange with post-quantum cryptography in TLS in both client
+    and server that use OpenSSL and nginx. The test is converted from QUBIP github
+    repo.
+description: ''
+contact: Ganna Starovoytova <gstarovo@redhat.com>
+enabled: true
+adjust:
+  - enabled: false
+    when: distro != fedora
+    continue: false
+component:
+  - openssl
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - crypto-policies-scripts
+  - liboqs
+  - openssl
+  - curl
+  - expect
+duration: 5m
